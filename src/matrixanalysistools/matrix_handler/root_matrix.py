@@ -154,6 +154,11 @@ class RootMatrix:
         return self._cholesky_decomp
 
     @property
+    def inverse(self)->'RootMatrix':
+        inverse = np.linalg.inv(self._matrix)
+        return RootMatrix(inverse)
+
+    @property
     def name(self)->str:
         return self._name
 

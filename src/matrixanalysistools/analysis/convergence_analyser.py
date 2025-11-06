@@ -113,7 +113,7 @@ class ConvergenceAnalyser:
         From https://probability.ca/jeff/ftpdir/adapteveryoneprnt.pdf
         '''
         # Get the "final" ~converged matrix
-        end_matrix = self.cholesky_components[-1]
+        end_matrix = self.cholesky_components[-1].inverse
         
         # Now we need chol[i]*converged
         mat_vec = ConvergenceAnalyser([m*end_matrix for m in self.cholesky_components])
