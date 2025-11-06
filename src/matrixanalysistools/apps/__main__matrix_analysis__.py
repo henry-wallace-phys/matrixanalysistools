@@ -48,7 +48,6 @@ def main(input_file: str, output_pdf: str, matrix_stem: str, start: int, stop: i
                      data=convergence_analyser.trace,
                      y_lab="Trace",
                      title=r"Trace",
-                     x_override=np.arange(start+step, stop-step, step)
                     )
 
 

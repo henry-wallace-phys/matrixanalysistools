@@ -193,7 +193,7 @@ class MatrixFileHandler:
         logging.info(f"[green]Loading matrices from [/][bold blue]{root_file_path}[/][green] with stem [/][bold blue]{matrix_stem}[/]")
 
         with uproot.open(root_file_path) as root_file:
-            self._matrix_list = [RootMatrix.from_root_file(root_file, f"{i}_{matrix_stem}") for i in tqdm(range(index_range[0], index_range[1], index_range[2]), "[orange]Opening Root files")]
+            self._matrix_list = [RootMatrix.from_root_file(root_file, f"{i}_{matrix_stem}") for i in tqdm(range(index_range[0], index_range[1], index_range[2]), f"Loading matrices from {root_file_path}")]
 
     @property
     def matrix_list(self)->List[RootMatrix]:
