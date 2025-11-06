@@ -47,11 +47,13 @@ class RootMatrix:
 
             file = uproot.open(file)
 
+        # WE ASSUME everything is a symmetric TH1D
         matrix_model = file.get(matrix_name, None)
 
         if matrix_model is None:
             raise ObjectNotFoundError(f"Couldn't find {matrix_name} in {file.file_path}")
 
+        # Output root matrix is a 1D array
         flat_matrix: NDArray = matrix_model.members['fElements']
 
         matrix_dim = np.sqrt(len(flat_matrix))
@@ -69,6 +71,9 @@ class RootMatrix:
 
     @classmethod
     def tmatrix_dsym_to_numpy(cls, flat_arr: np.ndarray):
+        ''' Converts ROOT TMatrixDSym into usable ROOT object. We're a bit inefficient in that we fill the 
+            full square but can fairly comfortably assume this won't make the memory usage too awful
+        '''
         # Upper triangular so need to convert to a matrix
         n_dim = int((np.sqrt(8 * len(flat_arr) + 1) - 1) / 2)
 
@@ -87,17 +92,20 @@ class RootMatrix:
 
     @property
     def dim(self)->int:
+        '''Matrix dimension'''
         return self._matrix_dim
 
     @property
     def eigenvalues(self)->NDArray:
+        '''Matrix eigenvalues, if called first will perform eigen decomposition'''
         if self._eigenvalues is None:
-            self.eigen_decomposition()
+            self.perform_eigen_decomposition()
 
         return self._eigenvalues
 
     @property
     def norm(self)->float:
+        '''Frobenius norm of the matrix'''
         return self._matrix_norm
 
     @property
@@ -113,11 +121,10 @@ class RootMatrix:
         '''
         return self._matrix.__getitem__(data)
 
-    def eigen_decomposition(self)->Tuple[NDArray, NDArray]:
+    def perform_eigen_decomposition(self)->Tuple[NDArray, NDArray]:
         '''
         Performs eigen value decomposition with a more verbose error
         '''
-
         try:
             self._eigenvalues = eigvalsh(self._matrix)
         except np.linalg.LinAlgError as e:
@@ -125,20 +132,45 @@ class RootMatrix:
 
         return self._eigenvalues
 
+    def perform_cholesky_decompositon(self)->'RootMatrix':
+        chol_matrix = np.linalg.cholesky(self._matrix)
+        self._cholesky_decomp = RootMatrix(chol_matrix, f"{self._name}_chol")
+        return self._cholesky_decomp
+
     @property
-    def cholesky_decomposition(self)->'RootMatrix':
+    def cholesky_component(self)->'RootMatrix':
         '''
         Lazy evaluation of cholesky decompositon. Ensure matrix is always connected to cholesky decomp.
         '''
         if self._cholesky_decomp is None:
-            chol_matrix = np.linalg.cholesky(self._matrix)
-            self._cholesky_decomp = RootMatrix(chol_matrix, f"{self._name}_chol")
+            self.perform_cholesky_decompositon()
 
         return self._cholesky_decomp
 
     @property
     def name(self)->str:
         return self._name
+
+    # Left multiply
+    def __mul__(self, other: 'float | RootMatrix'):
+        if isinstance(other, float):
+            mat = other*self._matrix
+        elif isinstance(other, RootMatrix):
+            mat = np.matmul(self._matrix, other._matrix)
+        else:
+            raise ValueError(f"Cannot mutliply RootMatrix by type {type(other)}")
+        
+        return RootMatrix(mat, self._name)
+
+    def __rmult__(self, other):
+        if isinstance(other, float):
+            mat = other*self._matrix
+        elif isinstance(other, RootMatrix):
+            mat = np.matmul(other._matrix, self._matrix)
+        else:
+            raise ValueError(f"Cannot mutliply RootMatrix by type {type(other)}")
+
+        return RootMatrix(mat, self._name)
 
 # ------------------------
 class MatrixFileHandler:

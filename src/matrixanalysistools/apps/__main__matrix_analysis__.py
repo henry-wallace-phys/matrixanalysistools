@@ -1,4 +1,5 @@
 import click
+import numpy as np
 
 from matrixanalysistools.matrix_handler.root_matrix import MatrixFileHandler
 from matrixanalysistools.analysis.convergence_analyser import ConvergenceAnalyser
@@ -20,22 +21,28 @@ def main(input_file, output_pdf, matrix_stem, start, stop, step):
     convergence_analyser = ConvergenceAnalyser(handler)
     
     # Initialise plotter
-    plotter = Plotter()
+    plotter = Plotter(start, stop, step)
     
     # Add plots
     plotter.add_plot(id="Norm",
                      data=convergence_analyser.matrix_norms,
-                     x_lab="Update Iter",
                      y_lab="Covariance Matrix Frob. Norm",
                      title="Norm of matrix/iteration"
                     ) 
 
-    plotter.add_plot(id="Change in |Eigennalue|",
+    plotter.add_plot(id="Change in |Eigenvalue|",
                      data=convergence_analyser.eigenvalue_roc,
-                     x_lab="Update Iter",
                      y_lab=r"Relative Change in Eigenvalue: $|\Delta\lambda|$",
-                     title=r"Change in $|\Delta\lambda|$ over iterations"
+                     title=r"Change in $|\Delta\lambda|$ over iterations",
+                     x_override=np.arange(start+step, stop-step, step)
                     )
+
+    plotter.add_plot(id="Suboptimality",
+                     data=convergence_analyser.suboptimality,
+                     y_lab="Suboptimality",
+                     title=r"Suboptimality of matrix"
+                    )
+
     
     # Write
     plotter(output_pdf)
