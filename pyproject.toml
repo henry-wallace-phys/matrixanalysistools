@@ -1,0 +1,22 @@
+[project]
+name = "matrixanalysistools"
+version = "1.0.0"
+description = "Simple set of tools for analysing sequences of ROOT TMatrices"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.3.0",
+    "matplotlib>=3.10.7",
+    "numpy>=2.3.4",
+    "rich",
+    "scipy>=1.16.3",
+    "tqdm>=4.67.1",
+    "uproot>=5.6.8",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.9,<0.9.0"]
+build-backend = "uv_build"
+
+[project.scripts]
+analyse_matrix = "matrixanalysistools.apps.__main__matrix_analysis__:main"
