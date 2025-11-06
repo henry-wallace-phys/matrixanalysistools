@@ -15,8 +15,11 @@ from matrixanalysistools.utils.logging import setup_logging
 @click.option('--step', default=1000, help="Steps between matrix creation")
 @click.option('--make_norm', default=True, help="Make the norm plot?")
 @click.option('--make_eigen', default=True, help="Plot |eigen values|?")
+@click.option('--make_trace', default=True, help="Steps between matrix creation")
 @click.option('--make_suboptimality', default=False, help="Steps between matrix creation")
-def main(input_file: str, output_pdf: str, matrix_stem: str, start: int, stop: int, step: int, make_norm: bool, make_eigen: bool, make_suboptimality: bool):
+
+def main(input_file: str, output_pdf: str, matrix_stem: str, start: int, stop: int, step: int,
+         make_norm: bool, make_eigen: bool, make_trace: bool, make_suboptimality: bool):
     setup_logging()
     # Make the handler object
     handler = MatrixFileHandler(input_file, matrix_stem, (start, stop, step))
@@ -31,21 +34,29 @@ def main(input_file: str, output_pdf: str, matrix_stem: str, start: int, stop: i
         plotter.add_plot(id="Norm",
                      data=convergence_analyser.matrix_norms,
                      y_lab="Covariance Matrix Frob. Norm",
-                     title="Norm of matrix/iteration"
+                     title="Norm of matrix/step"
                     ) 
     if make_eigen:
         plotter.add_plot(id="Change in |Eigenvalue|",
                      data=convergence_analyser.eigenvalue_roc,
                      y_lab=r"Relative Change in Eigenvalue: $|\Delta\lambda|$",
-                     title=r"Change in $|\Delta\lambda|$ over iterations",
+                     title=r"Change in $|\Delta\lambda|$ per step",
                      x_override=np.arange(start+step, stop-step, step)
                     )
+    if make_trace:
+        plotter.add_plot(id="Trace",
+                     data=convergence_analyser.trace,
+                     y_lab="Trace",
+                     title=r"Trace",
+                     x_override=np.arange(start+step, stop-step, step)
+                    )
+
 
     if make_suboptimality:
         plotter.add_plot(id="Suboptimality",
                      data=convergence_analyser.suboptimality,
                      y_lab="Suboptimality",
-                     title=r"Suboptimality of matrix"
+                     title=r"Suboptimality of matrix/step"
                     )
 
     

@@ -38,6 +38,8 @@ class RootMatrix:
         self._suboptimality: Optional[float] = None
 
         self._matrix_norm: float = np.linalg.norm(self._matrix)
+        
+        self._trace = np.trace(self._matrix)
 
     @classmethod
     def from_root_file(cls, file: uproot.ReadOnlyFile | Path, matrix_name: str):
@@ -94,6 +96,10 @@ class RootMatrix:
     def dim(self)->int:
         '''Matrix dimension'''
         return self._matrix_dim
+
+    @property
+    def trace(self)->float:
+        return self._trace
 
     @property
     def eigenvalues(self)->NDArray:
@@ -153,7 +159,7 @@ class RootMatrix:
 
     # Left multiply
     def __mul__(self, other: 'float | RootMatrix'):
-        if isinstance(other, float):
+        if isinstance(other, int):
             mat = other*self._matrix
         elif isinstance(other, RootMatrix):
             mat = np.matmul(self._matrix, other._matrix)
@@ -162,8 +168,10 @@ class RootMatrix:
         
         return RootMatrix(mat, self._name)
 
+
+
     def __rmult__(self, other):
-        if isinstance(other, float):
+        if isinstance(other, int):
             mat = other*self._matrix
         elif isinstance(other, RootMatrix):
             mat = np.matmul(other._matrix, self._matrix)
@@ -171,6 +179,12 @@ class RootMatrix:
             raise ValueError(f"Cannot mutliply RootMatrix by type {type(other)}")
 
         return RootMatrix(mat, self._name)
+
+    def __eq__(self, other):
+        if not isinstance(other, RootMatrix):
+            return False
+        
+        return np.array_equal(self._matrix, other._matrix)
 
 # ------------------------
 class MatrixFileHandler:

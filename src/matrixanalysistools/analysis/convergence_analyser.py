@@ -131,3 +131,7 @@ class ConvergenceAnalyser:
             self.calc_suboptimality()
             
         return self._suboptimality
+    
+    @property
+    def trace(self):
+        return [m.trace for m in self._matrix_list]
