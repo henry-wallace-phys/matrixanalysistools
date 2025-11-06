@@ -13,7 +13,10 @@ from matrixanalysistools.utils.logging import setup_logging
 @click.option('--start', default=0, help="Iteration to start finding plots for")
 @click.option('--stop', default=1000, help="Iteration to stop finding plots for")
 @click.option('--step', default=1000, help="Steps between matrix creation")
-def main(input_file, output_pdf, matrix_stem, start, stop, step):
+@click.option('--make_norm', default=True, help="Make the norm plot?")
+@click.option('--make_eigen', default=True, help="Plot |eigen values|?")
+@click.option('--make_suboptimality', default=False, help="Steps between matrix creation")
+def main(input_file: str, output_pdf: str, matrix_stem: str, start: int, stop: int, step: int, make_norm: bool, make_eigen: bool, make_suboptimality: bool):
     setup_logging()
     # Make the handler object
     handler = MatrixFileHandler(input_file, matrix_stem, (start, stop, step))
@@ -24,20 +27,22 @@ def main(input_file, output_pdf, matrix_stem, start, stop, step):
     plotter = Plotter(start, stop, step)
     
     # Add plots
-    plotter.add_plot(id="Norm",
+    if make_norm:
+        plotter.add_plot(id="Norm",
                      data=convergence_analyser.matrix_norms,
                      y_lab="Covariance Matrix Frob. Norm",
                      title="Norm of matrix/iteration"
                     ) 
-
-    plotter.add_plot(id="Change in |Eigenvalue|",
+    if make_eigen:
+        plotter.add_plot(id="Change in |Eigenvalue|",
                      data=convergence_analyser.eigenvalue_roc,
                      y_lab=r"Relative Change in Eigenvalue: $|\Delta\lambda|$",
                      title=r"Change in $|\Delta\lambda|$ over iterations",
                      x_override=np.arange(start+step, stop-step, step)
                     )
 
-    plotter.add_plot(id="Suboptimality",
+    if make_suboptimality:
+        plotter.add_plot(id="Suboptimality",
                      data=convergence_analyser.suboptimality,
                      y_lab="Suboptimality",
                      title=r"Suboptimality of matrix"
