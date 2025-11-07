@@ -19,7 +19,7 @@ class ConvergenceAnalyser:
     Analyses rate of change of eigenvalues from an (assumed) ordered list of RootMatrices from some process
     '''
 
-    def __init__(self, matrix_list: List[RootMatrix] | MatrixFileHandler):
+    def __init__(self, matrix_list: List[RootMatrix] | MatrixFileHandler, n_proc: Optional[int]=None):
 
         if isinstance(matrix_list, MatrixFileHandler):
             self._matrix_list = matrix_list.matrix_list
@@ -33,30 +33,31 @@ class ConvergenceAnalyser:
         self._cholesky_components: Optional[NDArray] = None
         self._suboptimality: Optional[NDArray] = None
 
+        self._n_proc = n_proc
+
         self.eigen_decompose()
         
-    def cholesky_decompose(self, n_workers: Optional[int]=None):
+    def cholesky_decompose(self):
         '''
         Just does the eigen decomposition for everything in a "nice" multithreaded way
         '''
-        self.__decompose(self._matrix_list, 'perform_cholesky_decompositon', n_workers)
+        self.__decompose(self._matrix_list, 'perform_cholesky_decompositon')
         # Bit inefficient to do this twice but it's easier to do it here since the TPE just caches
         self._cholesky_components = np.array([m.cholesky_component for m in self._matrix_list])
         return self._cholesky_components
 
-    def eigen_decompose(self, n_workers: Optional[int]=None):
-        self.__decompose(self._matrix_list, 'perform_eigen_decomposition', n_workers)
+    def eigen_decompose(self):
+        self.__decompose(self._matrix_list, 'perform_eigen_decomposition')
         # Bit inefficient to do this twice but it's easier to do it here since the TPE just caches
         self._eigenvalues = np.array([m.eigenvalues for m in self._matrix_list])
         return self._eigenvalues
 
-    @classmethod
-    def __decompose(cls, iterable: List[Any], method: str, n_workers: Optional[int]=None):
+    def __decompose(self, iterable: List[Any], method: str):
         
         if not hasattr(iterable[0], method):
             raise AttributeError(f"Error, {method} not a method in RootMatrix" )
         
-        with ThreadPoolExecutor(n_workers) as tpe:
+        with ThreadPoolExecutor(self._n_proc) as tpe:
             futures = [tpe.submit(getattr(m, method)) for m in iterable]
 
             for future in tqdm(as_completed(futures), total=len(futures), desc=f"Performing {method} on input matrices"):
